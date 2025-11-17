@@ -28,7 +28,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/campus_navigation', {
+const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://hpariya195:Harsh%402005@cluster0.audzrvd.mongodb.net/campus_navigation';
+
+mongoose.connect(mongoUri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
