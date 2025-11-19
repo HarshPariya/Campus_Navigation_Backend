@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const http = require('http');
 const socketIo = require('socket.io');
+const authGoogle = require('./routes/authGoogle')
 require('dotenv').config();
 
 const app = express();
@@ -61,6 +62,7 @@ app.use('/api/events', require('./routes/events'));
 app.use('/api/faculty', require('./routes/faculty'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/resources', require('./routes/resources'));
+app.use('/api/auth', authGoogle);
 
 // Health check
 app.get('/api/health', (req, res) => {

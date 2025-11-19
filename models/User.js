@@ -14,29 +14,42 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     trim: true
   },
-  password: {
-    type: String,
-    required: [true, 'Please provide a password'],
-    minlength: 6,
-    select: false
-  },
+ password: {
+  type: String,
+  minlength: 6,
+  select: false
+},
+googleUid: {
+  type: String,
+  unique: true,
+  sparse: true
+},
+avatar: {
+  type: String,
+  default: null
+},
+
+
   role: {
     type: String,
     enum: ['student', 'faculty', 'admin'],
     default: 'student'
   },
-  studentId: {
-    type: String,
-    sparse: true,
-    unique: true
-  },
+ studentId: {
+  type: String,
+  unique: true,
+  sparse: true,
+  default: undefined
+},
+
   department: {
     type: String,
     trim: true
   },
   year: {
     type: String,
-    enum: ['1st', '2nd', '3rd', '4th', 'Graduate']
+    enum: ['1st', '2nd', '3rd', '4th', 'Graduate',null],
+    default: null
   },
   createdAt: {
     type: Date,
