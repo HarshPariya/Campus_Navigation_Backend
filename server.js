@@ -1,10 +1,11 @@
+require('dotenv').config();
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const http = require('http');
 const socketIo = require('socket.io');
 const authGoogle = require('./routes/authGoogle')
-require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
