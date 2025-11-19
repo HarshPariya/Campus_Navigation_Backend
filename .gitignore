@@ -4,3 +4,6 @@ node_modules/
 *.log
 .DS_Store
 
+secrets/
+firebase-admin.json
+*.json   # Optional: ignore all JSON keys
