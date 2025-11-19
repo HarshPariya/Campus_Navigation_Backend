@@ -22,10 +22,7 @@ const io = socketIo(server, {
 });
 
 // Middleware
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true
-}));
+app.use(cors())
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
