@@ -57,6 +57,8 @@ io.on('connection', (socket) => {
 app.set('io', io);
 
 // Routes
+
+
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/rooms', require('./routes/rooms'));
 app.use('/api/events', require('./routes/events'));
@@ -66,8 +68,9 @@ app.use('/api/resources', require('./routes/resources'));
 app.use('/api/auth', authGoogle);
 
 // Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Campus Navigation API is running' });
+
+app.get('/', (req, res) => {
+  res.send('API is running');
 });
 
 const PORT = process.env.PORT || 5000;
