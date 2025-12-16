@@ -54,8 +54,6 @@ io.on('connection', (socket) => {
 app.set('io', io);
 
 // Routes
-
-
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/rooms', require('./routes/rooms'));
 app.use('/api/events', require('./routes/events'));
@@ -63,6 +61,23 @@ app.use('/api/faculty', require('./routes/faculty'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/resources', require('./routes/resources'));
 app.use('/api/auth', authGoogle);
+
+// New feature routes
+app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/announcements', require('./routes/announcements'));
+app.use('/api/lost-found', require('./routes/lostfound'));
+app.use('/api/maintenance', require('./routes/maintenance'));
+app.use('/api/study-groups', require('./routes/studygroups'));
+app.use('/api/cafeteria', require('./routes/cafeteria'));
+app.use('/api/transportation', require('./routes/transportation'));
+app.use('/api/qr-codes', require('./routes/qrcodes'));
+app.use('/api/feedback', require('./routes/feedback'));
+app.use('/api/emergency', require('./routes/emergency'));
+app.use('/api/attendance', require('./routes/attendance'));
+app.use('/api/courses', require('./routes/courses'));
+app.use('/api/grades', require('./routes/grades'));
+app.use('/api/directory', require('./routes/directory'));
+app.use('/api/analytics', require('./routes/analytics'));
 
 // Health check
 

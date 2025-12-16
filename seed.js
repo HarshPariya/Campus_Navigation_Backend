@@ -6,6 +6,14 @@ const Event = require('./models/Event');
 const Resource = require('./models/Resource');
 const Faculty = require('./models/Faculty');
 const User = require('./models/User');
+const Announcement = require('./models/Announcement');
+const LostFound = require('./models/LostFound');
+const Maintenance = require('./models/Maintenance');
+const StudyGroup = require('./models/StudyGroup');
+const { DailyMenu, Order, MealPlan } = require('./models/Cafeteria');
+const { Route, Vehicle } = require('./models/Transportation');
+const Course = require('./models/Course');
+const Feedback = require('./models/Feedback');
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/campus_navigation', {
@@ -386,12 +394,195 @@ async function seedDatabase() {
       console.log('💡 Tip: Create faculty accounts first, then run this script again.\n');
     }
 
+    // Seed Announcements
+    console.log('📢 Seeding Announcements...');
+    const announcementsData = [
+      {
+        title: 'Welcome Back to Campus!',
+        content: 'We are excited to welcome all students back for the new semester. Please check your schedules and familiarize yourself with the new facilities.',
+        scope: 'campus-wide',
+        priority: 'high',
+        isActive: true
+      },
+      {
+        title: 'Library Extended Hours',
+        content: 'The library will now be open until 10 PM on weekdays. Study rooms can be booked through the app.',
+        scope: 'campus-wide',
+        priority: 'normal',
+        isActive: true
+      },
+      {
+        title: 'Computer Science Department Meeting',
+        content: 'All CS students are required to attend the department meeting on Friday at 2 PM in Auditorium A301.',
+        scope: 'department',
+        targetDepartment: 'Computer Science',
+        priority: 'high',
+        isActive: true
+      }
+    ];
+    const announcements = await Announcement.insertMany(announcementsData.map(a => ({
+      ...a,
+      author: users[0]?._id || null
+    })));
+    console.log(`✅ Created ${announcements.length} announcements\n`);
+
+    // Seed Lost & Found
+    console.log('🔍 Seeding Lost & Found...');
+    const lostFoundData = [
+      {
+        type: 'lost',
+        title: 'Lost Laptop Charger',
+        description: 'Black Dell laptop charger, lost near A-Block',
+        category: 'electronics',
+        location: { building: 'A-Block', description: 'Near main entrance' },
+        status: 'open'
+      },
+      {
+        type: 'found',
+        title: 'Found Student ID Card',
+        description: 'Found a student ID card in the cafeteria',
+        category: 'documents',
+        location: { building: 'C-Block', description: 'Cafeteria area' },
+        status: 'open'
+      }
+    ];
+    const lostFound = await LostFound.insertMany(lostFoundData.map(item => ({
+      ...item,
+      reportedBy: users[0]?._id || null
+    })));
+    console.log(`✅ Created ${lostFound.length} lost & found items\n`);
+
+    // Seed Study Groups
+    console.log('📚 Seeding Study Groups...');
+    const studyGroupsData = [
+      {
+        name: 'Data Structures Study Group',
+        description: 'Study group for Data Structures and Algorithms course',
+        subject: 'Data Structures',
+        courseCode: 'CS201',
+        maxMembers: 10,
+        isPublic: true
+      },
+      {
+        name: 'Web Development Team',
+        description: 'Collaborative group for web development projects',
+        subject: 'Web Development',
+        maxMembers: 8,
+        isPublic: true
+      }
+    ];
+    const studyGroups = await StudyGroup.insertMany(studyGroupsData.map(group => ({
+      ...group,
+      createdBy: users[0]?._id || null,
+      members: [{ userId: users[0]?._id || null, role: 'admin' }]
+    })));
+    console.log(`✅ Created ${studyGroups.length} study groups\n`);
+
+    // Seed Cafeteria Menu
+    console.log('🍽️  Seeding Cafeteria Menu...');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const menuItems = [
+      { name: 'Breakfast Combo', description: 'Eggs, toast, and coffee', category: 'breakfast', price: 5.99 },
+      { name: 'Chicken Curry', description: 'Spicy chicken curry with rice', category: 'lunch', price: 8.99 },
+      { name: 'Vegetable Pasta', description: 'Fresh pasta with vegetables', category: 'dinner', price: 7.99 },
+      { name: 'Fresh Salad', description: 'Mixed greens with dressing', category: 'lunch', price: 4.99 }
+    ];
+    const dailyMenu = new DailyMenu({
+      date: today,
+      items: menuItems,
+      specials: [{ name: 'Chef Special Pizza', description: 'Today\'s special', category: 'lunch', price: 9.99 }]
+    });
+    await dailyMenu.save();
+    console.log('✅ Created daily menu\n');
+
+    // Seed Transportation Routes
+    console.log('🚌 Seeding Transportation...');
+    const routesData = [
+      {
+        routeNumber: 'R1',
+        name: 'Main Campus Loop',
+        description: 'Circular route covering all main buildings',
+        stops: [
+          { name: 'Main Gate', coordinates: { lat: 28.7041, lng: 77.1025 }, order: 1 },
+          { name: 'A-Block', coordinates: { lat: 28.7045, lng: 77.1030 }, order: 2 },
+          { name: 'B-Block', coordinates: { lat: 28.7048, lng: 77.1035 }, order: 3 },
+          { name: 'C-Block', coordinates: { lat: 28.7050, lng: 77.1040 }, order: 4 }
+        ],
+        schedule: [
+          { day: 'All', times: ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00'] }
+        ],
+        isActive: true
+      }
+    ];
+    const transportRoutes = await Route.insertMany(routesData);
+    console.log(`✅ Created ${transportRoutes.length} routes\n`);
+
+    // Seed Courses
+    console.log('📖 Seeding Courses...');
+    const coursesData = [
+      {
+        courseCode: 'CS201',
+        name: 'Data Structures and Algorithms',
+        description: 'Introduction to data structures and algorithm analysis',
+        department: 'Computer Science',
+        credits: 3,
+        semester: 'Fall',
+        year: 2024,
+        maxEnrollment: 60
+      },
+      {
+        courseCode: 'CS301',
+        name: 'Web Development',
+        description: 'Modern web development with React and Node.js',
+        department: 'Computer Science',
+        credits: 4,
+        semester: 'Fall',
+        year: 2024,
+        maxEnrollment: 40
+      }
+    ];
+    const courses = await Course.insertMany(coursesData);
+    console.log(`✅ Created ${courses.length} courses\n`);
+
+    // Seed Feedback
+    console.log('💬 Seeding Feedback...');
+    const feedbackData = [
+      {
+        type: 'room',
+        rating: 5,
+        title: 'Great Lab Facilities',
+        comment: 'The computer lab has excellent equipment and is always well-maintained.',
+        isPublic: true,
+        status: 'approved'
+      },
+      {
+        type: 'facility',
+        rating: 4,
+        title: 'Cafeteria Food Quality',
+        comment: 'Good variety but could use more vegetarian options.',
+        isPublic: true,
+        status: 'approved'
+      }
+    ];
+    const feedbacks = await Feedback.insertMany(feedbackData.map(f => ({
+      ...f,
+      userId: users[0]?._id || null
+    })));
+    console.log(`✅ Created ${feedbacks.length} feedback entries\n`);
+
     console.log('✨ Database seeding completed successfully!');
     console.log('\n📊 Summary:');
     console.log(`   - Rooms: ${rooms.length}`);
     console.log(`   - Events: ${events.length}`);
     console.log(`   - Resources: ${resources.length}`);
     console.log(`   - Faculty: ${users.length > 0 ? users.length : 0}`);
+    console.log(`   - Announcements: ${announcements.length}`);
+    console.log(`   - Lost & Found: ${lostFound.length}`);
+    console.log(`   - Study Groups: ${studyGroups.length}`);
+    console.log(`   - Transportation Routes: ${transportRoutes.length}`);
+    console.log(`   - Courses: ${courses.length}`);
+    console.log(`   - Feedback: ${feedbacks.length}`);
 
   } catch (error) {
     console.error('❌ Error seeding database:', error);
