@@ -27,9 +27,32 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // MongoDB Connection
-const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/campus_navigation';
+let mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/campus_navigation';
 
 const connectWithRetry = async (retries = 3, delay = 5000) => {
+  // Use in-memory MongoDB if no valid cloud cluster is provided in production
+  if (mongoUri.includes('cluster0.audzrvd.mongodb.net') || (process.env.NODE_ENV === 'production' && mongoUri.includes('localhost'))) {
+    console.log('No valid MONGODB_URI provided for production. Starting in-memory MongoDB...');
+    try {
+      const { MongoMemoryServer } = require('mongodb-memory-server');
+      const mongoServer = await MongoMemoryServer.create();
+      mongoUri = mongoServer.getUri();
+      console.log('In-memory MongoDB started at', mongoUri);
+      
+      // Auto-seed in memory DB
+      setTimeout(() => {
+        const { exec } = require('child_process');
+        console.log('Running seeder for in-memory database...');
+        exec('node seed.js', { env: { ...process.env, MONGODB_URI: mongoUri } }, (error, stdout, stderr) => {
+          if (error) console.error('Seed error:', error.message);
+          else console.log('In-memory DB seeded successfully');
+        });
+      }, 3000);
+    } catch (err) {
+      console.error('Failed to start in-memory DB:', err);
+    }
+  }
+
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       await mongoose.connect(mongoUri, {
