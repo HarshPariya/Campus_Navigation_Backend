@@ -16,10 +16,7 @@ const Course = require('./models/Course');
 const Feedback = require('./models/Feedback');
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/campus_navigation', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/campus_navigation')
 .then(() => console.log('MongoDB Connected for seeding...'))
 .catch(err => {
   console.error('MongoDB connection error:', err);
@@ -329,7 +326,28 @@ async function seedDatabase() {
     await Event.deleteMany({});
     await Resource.deleteMany({});
     await Faculty.deleteMany({});
+    await Announcement.deleteMany({});
+    await LostFound.deleteMany({});
+    await StudyGroup.deleteMany({});
+    await DailyMenu.deleteMany({});
+    await Route.deleteMany({});
+    await Course.deleteMany({});
+    await Feedback.deleteMany({});
     console.log('✅ Existing data cleared\n');
+
+    // Create default admin user if no users exist
+    let defaultUser = await User.findOne({ email: 'admin@campus.edu' });
+    if (!defaultUser) {
+      console.log('👤 Creating default admin user...');
+      defaultUser = await User.create({
+        name: 'Campus Admin',
+        email: 'admin@campus.edu',
+        password: 'admin123456',
+        role: 'admin',
+        department: 'Administration'
+      });
+      console.log('✅ Default admin created (admin@campus.edu / admin123456)\n');
+    }
 
     // Seed Rooms
     console.log('📦 Seeding Rooms...');
@@ -422,7 +440,7 @@ async function seedDatabase() {
     ];
     const announcements = await Announcement.insertMany(announcementsData.map(a => ({
       ...a,
-      author: users[0]?._id || null
+      author: defaultUser._id
     })));
     console.log(`✅ Created ${announcements.length} announcements\n`);
 
@@ -448,7 +466,7 @@ async function seedDatabase() {
     ];
     const lostFound = await LostFound.insertMany(lostFoundData.map(item => ({
       ...item,
-      reportedBy: users[0]?._id || null
+      reportedBy: defaultUser._id
     })));
     console.log(`✅ Created ${lostFound.length} lost & found items\n`);
 
@@ -473,8 +491,8 @@ async function seedDatabase() {
     ];
     const studyGroups = await StudyGroup.insertMany(studyGroupsData.map(group => ({
       ...group,
-      createdBy: users[0]?._id || null,
-      members: [{ userId: users[0]?._id || null, role: 'admin' }]
+      createdBy: defaultUser._id,
+      members: [{ userId: defaultUser._id, role: 'admin' }]
     })));
     console.log(`✅ Created ${studyGroups.length} study groups\n`);
 
@@ -567,7 +585,7 @@ async function seedDatabase() {
     ];
     const feedbacks = await Feedback.insertMany(feedbackData.map(f => ({
       ...f,
-      userId: users[0]?._id || null
+      userId: defaultUser._id
     })));
     console.log(`✅ Created ${feedbacks.length} feedback entries\n`);
 

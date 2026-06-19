@@ -27,14 +27,32 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // MongoDB Connection
-const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://hpariya195:Harsh%402005@cluster0.audzrvd.mongodb.net/campus_navigation';
+const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/campus_navigation';
 
-mongoose.connect(mongoUri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('MongoDB Connected'))
-.catch(err => console.error('MongoDB connection error:', err));
+const connectWithRetry = async (retries = 3, delay = 5000) => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      await mongoose.connect(mongoUri, {
+        serverSelectionTimeoutMS: 10000,
+        socketTimeoutMS: 45000,
+        family: 4, // Force IPv4 to avoid DNS issues
+      });
+      console.log('MongoDB Connected');
+      return;
+    } catch (err) {
+      console.error(`MongoDB connection attempt ${attempt}/${retries} failed:`, err.message);
+      if (attempt < retries) {
+        console.log(`Retrying in ${delay / 1000}s...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay *= 2; // Exponential backoff
+      } else {
+        console.error('All MongoDB connection attempts failed. Server running without DB.');
+      }
+    }
+  }
+};
+
+connectWithRetry();
 
 // Socket.io for real-time updates
 io.on('connection', (socket) => {
