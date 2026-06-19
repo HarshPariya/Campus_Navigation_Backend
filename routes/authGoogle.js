@@ -23,8 +23,13 @@ router.post('/google', async (req, res) => {
       return res.status(400).json({ success: false, message: 'ID token is required' });
     }
 
-    // 1️⃣ Verify token with Firebase Admin
-    const decoded = await admin.auth().verifyIdToken(idToken);
+    // 1️⃣ Verify token with Firebase Admin (with timeout)
+    const decoded = await Promise.race([
+      admin.auth().verifyIdToken(idToken),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Token verification timeout')), 30000)
+      )
+    ]);
 
     const googleUid = decoded.uid;
     const email = decoded.email;
@@ -49,19 +54,18 @@ router.post('/google', async (req, res) => {
         name,
         email,
         googleUid,
-         avatar: picture,
+        avatar: picture,
         role: 'student',      // Default role
-        
       });
-    }
-
-    // 4️⃣ If user exists but googleUid is missing → add it
-    if (!user.googleUid) {
-      user.googleUid = googleUid;
+    } else {
+      // 4️⃣ If user exists but googleUid is missing → add it
+      if (!user.googleUid) {
+        user.googleUid = googleUid;
         if (!user.avatar && picture) {
-    user.avatar = picture;
-  }
-      await user.save();
+          user.avatar = picture;
+        }
+        await user.save();
+      }
     }
 
     // 5️⃣ Create JWT token for your system
@@ -82,10 +86,26 @@ router.post('/google', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error('Google auth error:', error);
+    
+    // Provide more specific error messages
+    if (error.message?.includes('timeout')) {
+      return res.status(408).json({
+        success: false,
+        message: 'Authentication timeout. Please try again.'
+      });
+    }
+    
+    if (error.code === 'auth/id-token-expired') {
+      return res.status(401).json({
+        success: false,
+        message: 'Token expired. Please sign in again.'
+      });
+    }
+    
     return res.status(500).json({
       success: false,
-      message: 'Google authentication failed'
+      message: error.message || 'Google authentication failed'
     });
   }
 });
